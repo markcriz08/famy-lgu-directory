@@ -38,7 +38,7 @@ router.post('/send', async (req, res) => {
       `https://api.textbee.dev/api/v1/gateway/devices/${TEXTBEE_DEVICE_ID}/send-sms?apiKey=${encodeURIComponent(TEXTBEE_API_KEY)}`,
       {
         recipients: [formattedPhone],
-        message: `[FAMY I.C.E ALERT] ${message}`
+        message: `[FAMY MDRRMO ALERT] ${message}`
       },
       {
         headers: {
