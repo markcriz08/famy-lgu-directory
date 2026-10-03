@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAMY LGU Municipal Directory & Emergency Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+          colors: {
+            ice: { 50: '#f0f9ff', 100: '#e0f2fe', 400: '#38bdf8', 500: '#0ea5e9', 900: '#0c4a6e' },
+            coldDark: '#090d16',
+            coldCard: 'rgba(17, 24, 39, 0.75)',
+            coldAccent: '#14b8a6'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-panel {
+      background: rgba(17, 24, 39, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.15);
+    }
+  </style>
+</head>
+<body class="bg-coldDark text-slate-100 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- Header -->
+  <header class="glass-panel sticky top-0 z-40 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ice-500 to-coldAccent flex items-center justify-center font-bold text-lg text-slate-950">F</div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-100">FAMY LGU Portal</h1>
+          <p class="text-xs text-slate-400">Municipal Directory & Emergency Gateway</p>
+        </div>
+      </div>
+
+      <div id="authActions" class="flex items-center gap-3">
+        <button onclick="toggleModal('loginModal')" class="px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded-lg">Login</button>
+        <button onclick="toggleModal('registerModal')" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-ice-500 to-coldAccent text-slate-950 rounded-lg">Register Admin</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-8 flex flex-col gap-6">
+
+    <!-- Top Status Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="glass-panel rounded-xl p-5">
+        <div class="text-slate-400 text-xs font-semibold uppercase">Gateway Status</div>
+        <div class="text-xl font-bold text-emerald-400 mt-1 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span> Status Online
+        </div>
+      </div>
+      <div class="glass-panel rounded-xl p-5">
+        <div class="text-slate-400 text-xs font-semibold uppercase">Database Link</div>
+        <div class="text-xl font-bold text-ice-400 mt-1">Database Online</div>
+      </div>
+      <div class="glass-panel rounded-xl p-5">
+        <div class="text-slate-400 text-xs font-semibold uppercase">Role Access</div>
+        <div id="userRoleBadge" class="text-xl font-bold text-slate-300 mt-1">Guest / Public</div>
+      </div>
+    </div>
+
+    <!-- Super Admin Approvals Drawer -->
+    <section id="superAdminSection" class="hidden glass-panel rounded-2xl p-6 border-amber-500/30">
+      <h2 class="text-md font-bold text-amber-400 mb-3">🛡️ Pending Admin Registrations</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="text-xs text-slate-400 uppercase bg-slate-900/50">
+            <tr>
+              <th class="p-3">Name</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Date</th>
+              <th class="p-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="pendingAdminsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Directory Controls & Category Tabs -->
+    <section class="glass-panel rounded-2xl p-6">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-slate-100">Municipal Directory</h2>
+          <p class="text-xs text-slate-400">Filter by department tabs or search by name, position, or organization</p>
+        </div>
+
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <input type="text" id="searchInput" oninput="filterContacts()" placeholder="🔍 Search contacts..." class="w-full md:w-64 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-ice-400" />
+          <button id="addContactBtn" onclick="openContactModal()" class="hidden whitespace-nowrap px-4 py-2 text-sm font-semibold bg-ice-500 text-slate-950 rounded-lg hover:bg-ice-400">
+            + Add Contact
+          </button>
+        </div>
+      </div>
+
+      <!-- Category Navigation Tabs -->
+      <div class="flex flex-wrap gap-2 border-b border-slate-800 pb-4 mb-6" id="categoryTabs">
+        <button onclick="switchTab('ALL')" class="tab-btn active px-4 py-2 rounded-lg text-xs font-semibold bg-ice-500 text-slate-950">ALL</button>
+        <button onclick="switchTab('ICE')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30">🚨 I.C.E HOTLINES</button>
+        <button onclick="switchTab('MDRRMO')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">MDRRMO</button>
+        <button onclick="switchTab('PNP')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">PNP</button>
+        <button onclick="switchTab('BFP')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">BFP</button>
+        <button onclick="switchTab('LGU')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">LGU</button>
+        <button onclick="switchTab('RHU')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">RHU</button>
+        <button onclick="switchTab('ACDV')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">ACDV (Volunteers)</button>
+        <button onclick="switchTab('BARANGAY')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">BARANGAY</button>
+        <button onclick="switchTab('SCHOOL')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">SCHOOL</button>
+      </div>
+
+      <!-- Contact Grid Cards -->
+      <div id="contactsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Populated via JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal: Add/Edit Directory Contact -->
+  <div id="contactModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="glass-panel w-full max-w-lg rounded-2xl p-6 relative my-auto max-h-[90vh] overflow-y-auto">
+      <h3 id="modalTitle" class="text-lg font-bold text-slate-100 mb-4">Add Directory Contact</h3>
+      <form onsubmit="saveContact(event)" class="space-y-3">
+        <input type="hidden" id="contactId" />
+
+        <!-- NAME -->
+        <div>
+          <label class="block text-xs text-slate-400 uppercase font-semibold">Name</label>
+          <input type="text" id="cName" required placeholder="Full Name / Office Contact" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
+        </div>
+
+        <!-- CONTACT & OTHER CONTACT -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 uppercase font-semibold">Contact (Primary)</label>
+            <input type="text" id="cContact" required placeholder="09123456789" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 uppercase font-semibold">Other Contact</label>
+            <input type="text" id="cOtherContact" placeholder="Landline / Alt Phone" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
+          </div>
+        </div>
+
+        <!-- ADDRESS -->
+        <div>
+          <label class="block text-xs text-slate-400 uppercase font-semibold">Address</label>
+          <input type="text" id="cAddress" placeholder="Barangay, Station, or Office Address" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
+        </div>
+
+        <!-- ORGANIZATION / DEPARTMENT -->
+        <div>
+          <label class="block text-xs text-slate-400 uppercase font-semibold">Organization / Department</label>
+          <input type="text" id="cOrgDept" placeholder="e.g. MDRRMO Rescue Division, PNP Patrol Unit" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
+        </div>
+
+        <!-- CATEGORY & DESIGNATION -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 uppercase font-semibold">Category / Module</label>
+            <select id="cCategory" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400">
+              <option value="MDRRMO">MDRRMO</option>
+              <option value="PNP">PNP</option>
+              <option value="BFP">BFP</option>
+              <option value="LGU">LGU</option>
+              <option value="RHU">RHU</option>
+              <option value="ACDV">ACDV (Volunteers)</option>
+              <option value="BARANGAY">BARANGAY</option>
+              <option value="SCHOOL">SCHOOL</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 uppercase font-semibold">Designation</label>
+            <input type="text" id="cDesignation" placeholder="e.g. Chief of Police, Volunteer" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
+          </div>
+        </div>
+
+        <!-- FB LINK -->
+        <div>
+          <label class="block text-xs text-slate-400 uppercase font-semibold">FB Link</label>
+          <input type="text" id="cFbLink" placeholder="https://facebook.com/profile" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
+        </div>
+
+        <!-- I.C.E CHECKBOX -->
+        <div class="flex items-center gap-2 pt-2">
+          <input type="checkbox" id="cIsIce" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-rose-500 focus:ring-0 cursor-pointer" />
+          <label for="cIsIce" class="text-xs text-rose-400 font-semibold cursor-pointer">Mark as Main I.C.E Emergency Contact</label>
+        </div>
+
+        <!-- FORM BUTTONS -->
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+          <button type="button" onclick="toggleModal('contactModal')" class="px-4 py-2 text-xs text-slate-400 hover:text-slate-200">Cancel</button>
+          <button type="submit" class="px-5 py-2 text-xs font-semibold bg-ice-500 hover:bg-ice-400 text-slate-950 rounded-lg">Save Contact</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Dispatch SMS Alert -->
+  <div id="smsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="glass-panel w-full max-w-md rounded-2xl p-6 relative">
+      <h3 class="text-lg font-bold text-slate-100 mb-1">📲 Send Emergency SMS Alert</h3>
+      <p id="smsTargetName" class="text-xs text-ice-400 mb-4"></p>
+      <form onsubmit="sendSmsAlert(event)" class="space-y-3">
+        <input type="hidden" id="smsPhone" />
+        <div>
+          <label class="block text-xs text-slate-400 uppercase font-semibold mb-1">Alert Message</label>
+          <textarea id="smsMessage" rows="4" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-100 focus:outline-none focus:border-ice-400" placeholder="Type emergency message..."></textarea>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="toggleModal('smsModal')" class="px-4 py-2 text-xs text-slate-400">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold bg-emerald-500 text-slate-950 rounded-lg">Dispatch SMS Now</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modals: Login & Registration -->
+  <div id="loginModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="glass-panel w-full max-w-md rounded-2xl p-6 relative">
+      <h3 class="text-xl font-bold text-slate-100 mb-4">Admin Sign In</h3>
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <input type="email" id="loginEmail" placeholder="Email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-100" />
+        <input type="password" id="loginPassword" placeholder="Password" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-100" />
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="toggleModal('loginModal')" class="px-4 py-2 text-xs text-slate-400">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold bg-ice-500 text-slate-950 rounded-lg">Sign In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="registerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="glass-panel w-full max-w-md rounded-2xl p-6 relative">
+      <h3 class="text-xl font-bold text-slate-100 mb-1">Request Admin Account</h3>
+      <p class="text-xs text-slate-400 mb-4">Requires Super Admin approval.</p>
+      <form onsubmit="handleRegister(event)" class="space-y-3">
+        <input type="text" id="regName" placeholder="Full Name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-100" />
+        <input type="email" id="regEmail" placeholder="Email Address" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-100" />
+        <input type="password" id="regPassword" placeholder="Password" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-100" />
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="toggleModal('registerModal')" class="px-4 py-2 text-xs text-slate-400">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold bg-coldAccent text-slate-950 rounded-lg">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Application Frontend Script -->
+  <script>
+    let contacts = [];
+    let activeTab = 'ALL';
+    let authToken = localStorage.getItem('famy_jwt') || null;
+    let currentUser = JSON.parse(localStorage.getItem('famy_user') || 'null');
+
+    function toggleModal(id) {
+      const el = document.getElementById(id);
+      el.classList.toggle('hidden');
+      el.classList.toggle('flex');
+    }
+
+    async function loadContacts() {
+      try {
+        const res = await fetch('/api/contacts');
+        const data = await res.json();
+        if (data.success) {
+          contacts = data.contacts;
+          renderContacts();
+        }
+      } catch (err) {
+        console.error('Failed to load contacts:', err);
+      }
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-ice-500', 'text-slate-950');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+      event.target.classList.remove('bg-slate-800', 'text-slate-300');
+      event.target.classList.add('bg-ice-500', 'text-slate-950');
+      renderContacts();
+    }
+
+    function filterContacts() {
+      renderContacts();
+    }
+
+    function renderContacts() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const grid = document.getElementById('contactsGrid');
+
+      let filtered = contacts.filter(c => {
+        const matchesTab = (activeTab === 'ALL') || 
+                           (activeTab === 'ICE' && c.is_ice) || 
+                           (c.category === activeTab);
+        const matchesSearch = c.name.toLowerCase().includes(search) || 
+                              (c.designation && c.designation.toLowerCase().includes(search)) ||
+                              (c.organization_department && c.organization_department.toLowerCase().includes(search)) ||
+                              c.category.toLowerCase().includes(search);
+        return matchesTab && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-sm">No directory contacts found.</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(c => `
+        <div class="glass-panel rounded-xl p-5 hover:border-ice-400/30 transition-all flex flex-col justify-between relative">
+          ${c.is_ice ? `<span class="absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">🚨 I.C.E HOTLINE</span>` : ''}
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-ice-500/10 text-ice-400 uppercase border border-ice-500/20">${c.category}</span>
+            </div>
+
+            <h3 class="text-base font-bold text-slate-100">${c.name}</h3>
+            <p class="text-xs text-slate-300 font-medium">${c.designation || 'Personnel'}</p>
+            ${c.organization_department ? `<p class="text-xs text-ice-400/90 mt-0.5 font-medium">🏢 ${c.organization_department}</p>` : ''}
+            
+            <div class="space-y-1 text-xs text-slate-300 mt-3 mb-4">
+              <div>📞 <span class="font-mono text-slate-100 font-semibold">${c.contact}</span> ${c.other_contact ? `/ <span class="font-mono">${c.other_contact}</span>` : ''}</div>
+              ${c.address ? `<div>📍 ${c.address}</div>` : ''}
+              ${c.fb_link ? `<div>🌐 <a href="${c.fb_link}" target="_blank" class="text-ice-400 hover:underline">Facebook Profile</a></div>` : ''}
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
+            <button onclick="openSmsModal('${c.name}', '${c.contact}')" class="px-3 py-1.5 text-xs font-semibold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded-lg flex items-center gap-1">
+              📲 Text Alert
+            </button>
+
+            ${currentUser ? `
+              <div class="flex items-center gap-1">
+                ${c.category === 'MDRRMO' ? `<button onclick="resignPersonnel('${c.id}')" title="Resign & Transfer to ACDV Volunteers" class="px-2 py-1 text-[11px] bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 rounded">Resign</button>` : ''}
+                <button onclick="editContact('${c.id}')" class="px-2 py-1 text-[11px] bg-slate-800 text-slate-300 hover:bg-slate-700 rounded">Edit</button>
+                <button onclick="deleteContact('${c.id}')" class="px-2 py-1 text-[11px] bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 rounded">Delete</button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openContactModal() {
+      document.getElementById('contactId').value = '';
+      document.getElementById('cName').value = '';
+      document.getElementById('cContact').value = '';
+      document.getElementById('cOtherContact').value = '';
+      document.getElementById('cAddress').value = '';
+      document.getElementById('cOrgDept').value = '';
+      document.getElementById('cDesignation').value = '';
+      document.getElementById('cFbLink').value = '';
+      document.getElementById('cIsIce').checked = false;
+      document.getElementById('modalTitle').innerText = 'Add Directory Contact';
+      toggleModal('contactModal');
+    }
+
+    function editContact(id) {
+      const c = contacts.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('contactId').value = c.id;
+      document.getElementById('cName').value = c.name;
+      document.getElementById('cContact').value = c.contact;
+      document.getElementById('cOtherContact').value = c.other_contact || '';
+      document.getElementById('cAddress').value = c.address || '';
+      document.getElementById('cOrgDept').value = c.organization_department || '';
+      document.getElementById('cCategory').value = c.category;
+      document.getElementById('cDesignation').value = c.designation || '';
+      document.getElementById('cFbLink').value = c.fb_link || '';
+      document.getElementById('cIsIce').checked = c.is_ice;
+      document.getElementById('modalTitle').innerText = 'Edit Directory Contact';
+      toggleModal('contactModal');
+    }
+
+    async function saveContact(e) {
+      e.preventDefault();
+      const id = document.getElementById('contactId').value;
+      const payload = {
+        name: document.getElementById('cName').value,
+        contact: document.getElementById('cContact').value,
+        other_contact: document.getElementById('cOtherContact').value,
+        address: document.getElementById('cAddress').value,
+        organization_department: document.getElementById('cOrgDept').value,
+        category: document.getElementById('cCategory').value,
+        designation: document.getElementById('cDesignation').value,
+        fb_link: document.getElementById('cFbLink').value,
+        is_ice: document.getElementById('cIsIce').checked
+      };
+
+      const url = id ? `/api/contacts/${id}` : '/api/contacts';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        toggleModal('contactModal');
+        loadContacts();
+      } else {
+        alert('Error saving contact: ' + data.error);
+      }
+    }
+
+    async function deleteContact(id) {
+      if (!confirm('Are you sure you want to delete this directory contact?')) return;
+      const res = await fetch(`/api/contacts/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      const data = await res.json();
+      if (data.success) loadContacts();
+    }
+
+    async function resignPersonnel(id) {
+      if (!confirm('Confirm personnel resignation? This will automatically transfer them from MDRRMO to ACDV Volunteers.')) return;
+      const res = await fetch(`/api/contacts/${id}/resign`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        loadContacts();
+      }
+    }
+
+    function openSmsModal(name, phone) {
+      document.getElementById('smsTargetName').innerText = `Target Recipient: ${name} (${phone})`;
+      document.getElementById('smsPhone').value = phone;
+      document.getElementById('smsMessage').value = `Emergency alert for ${name}. Please respond immediately.`;
+      toggleModal('smsModal');
+    }
+
+    async function sendSmsAlert(e) {
+      e.preventDefault();
+      const phone = document.getElementById('smsPhone').value;
+      const message = document.getElementById('smsMessage').value;
+
+      try {
+        const res = await fetch('/api/sms/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, message })
+        });
+        const data = await res.json();
+        if (data.success) {
+          toggleModal('smsModal');
+          alert('📲 Emergency alert SMS sent successfully!');
+        } else {
+          alert('Failed to send SMS: ' + data.error);
+        }
+      } catch (err) {
+        alert('Gateway error sending SMS.');
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        authToken = data.token;
+        currentUser = data.admin;
+        localStorage.setItem('famy_jwt', authToken);
+        localStorage.setItem('famy_user', JSON.stringify(currentUser));
+        toggleModal('loginModal');
+        updateUIState();
+      } else {
+        alert('Login failed: ' + data.error);
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: document.getElementById('regName').value,
+          email: document.getElementById('regEmail').value,
+          password: document.getElementById('regPassword').value
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toggleModal('registerModal');
+        alert(data.message);
+      } else {
+        alert('Registration error: ' + data.error);
+      }
+    }
+
+    async function loadPendingAdmins() {
+      if (!authToken || currentUser?.role !== 'superadmin') return;
+      const res = await fetch('/api/admin/pending', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      const data = await res.json();
+      const tbody = document.getElementById('pendingAdminsTableBody');
+      if (data.success && data.pendingAdmins.length > 0) {
+        tbody.innerHTML = data.pendingAdmins.map(a => `
+          <tr class="border-t border-slate-800">
+            <td class="p-3 font-semibold text-slate-200">${a.full_name}</td>
+            <td class="p-3 text-slate-400">${a.email}</td>
+            <td class="p-3 text-slate-500 text-xs">${new Date(a.created_at).toLocaleDateString()}</td>
+            <td class="p-3 text-right space-x-2">
+              <button onclick="reviewAdmin('${a.id}', 'approve')" class="px-3 py-1 rounded bg-emerald-500/20 text-emerald-400 text-xs font-semibold">Approve</button>
+              <button onclick="reviewAdmin('${a.id}', 'reject')" class="px-3 py-1 rounded bg-rose-500/20 text-rose-400 text-xs font-semibold">Reject</button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending admin approvals.</td></tr>`;
+      }
+    }
+
+    async function reviewAdmin(adminId, action) {
+      const res = await fetch('/api/admin/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ adminId, action })
+      });
+      const data = await res.json();
+      if (data.success) loadPendingAdmins();
+    }
+
+    function updateUIState() {
+      const authActions = document.getElementById('authActions');
+      const badge = document.getElementById('userRoleBadge');
+      const addBtn = document.getElementById('addContactBtn');
+      const superSection = document.getElementById('superAdminSection');
+
+      if (currentUser) {
+        badge.innerText = `${currentUser.full_name} (${currentUser.role.toUpperCase()})`;
+        addBtn.classList.remove('hidden');
+        authActions.innerHTML = `<button onclick="logout()" class="px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/10 rounded-lg">Logout</button>`;
+        if (currentUser.role === 'superadmin') {
+          superSection.classList.remove('hidden');
+          loadPendingAdmins();
+        } else {
+          superSection.classList.add('hidden');
+        }
+      } else {
+        badge.innerText = 'Guest / Public';
+        addBtn.classList.add('hidden');
+        superSection.classList.add('hidden');
+      }
+      loadContacts();
+    }
+
+    function logout() {
+      localStorage.clear();
+      location.reload();
+    }
+
+    updateUIState();
+  </script>
+</body>
+</html>
