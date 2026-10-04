@@ -96,8 +96,13 @@
           <p class="text-xs text-slate-400">Filter by department tabs or search by name, position, or organization</p>
         </div>
 
-        <div class="flex items-center gap-3 w-full md:w-auto">
+        <div class="flex items-center gap-3 w-full md:w-auto flex-wrap">
           <input type="text" id="searchInput" oninput="filterContacts()" placeholder="🔍 Search contacts..." class="w-full md:w-64 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-ice-400" />
+          
+          <button onclick="toggleModal('groupSmsModal')" class="whitespace-nowrap px-4 py-2 text-sm font-semibold bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 rounded-lg hover:brightness-110 flex items-center gap-1.5 shadow-lg shadow-rose-950/30">
+            📢 Group Text Blast
+          </button>
+
           <button id="addContactBtn" onclick="openContactModal()" class="hidden whitespace-nowrap px-4 py-2 text-sm font-semibold bg-ice-500 text-slate-950 rounded-lg hover:bg-ice-400">
             + Add Contact
           </button>
@@ -126,6 +131,78 @@
 
   </main>
 
+  <!-- Modal: Group Text Blast -->
+  <div id="groupSmsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="glass-panel w-full max-w-xl rounded-2xl p-6 relative my-auto max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">📢 Group Targeted Text Blast</h3>
+          <p class="text-xs text-slate-400">Select target recipient groups or select all contacts.</p>
+        </div>
+        <button type="button" onclick="toggleModal('groupSmsModal')" class="text-slate-400 hover:text-slate-200 text-xl font-bold">&times;</button>
+      </div>
+
+      <form onsubmit="sendGroupTextBlast(event)" class="space-y-4">
+        <!-- Group Category Checkboxes -->
+        <div>
+          <label class="block text-xs text-slate-400 uppercase font-semibold mb-2">Select Target Categories:</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs">
+            <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-800 cursor-pointer text-amber-400 font-bold col-span-full border-b border-slate-800 pb-2">
+              <input type="checkbox" value="ALL" id="catAllCheckbox" onchange="toggleSelectAllCategories(this)" class="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0" />
+              <span>Select All Contacts</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-800 cursor-pointer">
+              <input type="checkbox" value="MDRRMO" class="group-cat-checkbox w-4 h-4 rounded bg-slate-800 border-slate-700 text-ice-500 focus:ring-0" onchange="syncSelectAllState()" />
+              <span>MDRRMO</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-800 cursor-pointer">
+              <input type="checkbox" value="PNP" class="group-cat-checkbox w-4 h-4 rounded bg-slate-800 border-slate-700 text-ice-500 focus:ring-0" onchange="syncSelectAllState()" />
+              <span>PNP</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-800 cursor-pointer">
+              <input type="checkbox" value="BFP" class="group-cat-checkbox w-4 h-4 rounded bg-slate-800 border-slate-700 text-ice-500 focus:ring-0" onchange="syncSelectAllState()" />
+              <span>BFP</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-800 cursor-pointer">
+              <input type="checkbox" value="LGU" class="group-cat-checkbox w-4 h-4 rounded bg-slate-800 border-slate-700 text-ice-500 focus:ring-0" onchange="syncSelectAllState()" />
+              <span>LGU</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-800 cursor-pointer">
+              <input type="checkbox" value="RHU" class="group-cat-checkbox w-4 h-4 rounded bg-slate-800 border-slate-700 text-ice-500 focus:ring-0" onchange="syncSelectAllState()" />
+              <span>RHU</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-800 cursor-pointer">
+              <input type="checkbox" value="ACDV" class="group-cat-checkbox w-4 h-4 rounded bg-slate-800 border-slate-700 text-ice-500 focus:ring-0" onchange="syncSelectAllState()" />
+              <span>ACDV (Volunteers)</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-800 cursor-pointer">
+              <input type="checkbox" value="BARANGAY" class="group-cat-checkbox w-4 h-4 rounded bg-slate-800 border-slate-700 text-ice-500 focus:ring-0" onchange="syncSelectAllState()" />
+              <span>BARANGAY</span>
+            </label>
+            <label class="flex items-center gap-2 p-1.5 rounded hover:bg-slate-800 cursor-pointer">
+              <input type="checkbox" value="SCHOOL" class="group-cat-checkbox w-4 h-4 rounded bg-slate-800 border-slate-700 text-ice-500 focus:ring-0" onchange="syncSelectAllState()" />
+              <span>SCHOOL</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Broadcast Message Input -->
+        <div>
+          <label class="block text-xs text-slate-400 uppercase font-semibold mb-1">Broadcast Alert Message</label>
+          <textarea id="groupBlastMessage" rows="4" required placeholder="Type emergency advisory or municipal announcement..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-100 focus:outline-none focus:border-ice-400"></textarea>
+        </div>
+
+        <!-- Submission Controls -->
+        <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+          <button type="button" onclick="toggleModal('groupSmsModal')" class="px-4 py-2 text-xs text-slate-400 hover:text-slate-200">Cancel</button>
+          <button type="submit" id="sendBlastBtn" class="px-5 py-2 text-xs font-bold bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 hover:brightness-110 rounded-lg flex items-center gap-1.5">
+            🚀 Dispatch Group Text Blast
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal: Add/Edit Directory Contact -->
   <div id="contactModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="glass-panel w-full max-w-lg rounded-2xl p-6 relative my-auto max-h-[90vh] overflow-y-auto">
@@ -133,13 +210,11 @@
       <form onsubmit="saveContact(event)" class="space-y-3">
         <input type="hidden" id="contactId" />
 
-        <!-- NAME -->
         <div>
           <label class="block text-xs text-slate-400 uppercase font-semibold">Name</label>
           <input type="text" id="cName" required placeholder="Full Name / Office Contact" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
         </div>
 
-        <!-- CONTACT & OTHER CONTACT -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs text-slate-400 uppercase font-semibold">Contact (Primary)</label>
@@ -151,19 +226,16 @@
           </div>
         </div>
 
-        <!-- ADDRESS -->
         <div>
           <label class="block text-xs text-slate-400 uppercase font-semibold">Address</label>
           <input type="text" id="cAddress" placeholder="Barangay, Station, or Office Address" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
         </div>
 
-        <!-- ORGANIZATION / DEPARTMENT -->
         <div>
           <label class="block text-xs text-slate-400 uppercase font-semibold">Organization / Department</label>
           <input type="text" id="cOrgDept" placeholder="e.g. MDRRMO Rescue Division, PNP Patrol Unit" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
         </div>
 
-        <!-- CATEGORY & DESIGNATION -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs text-slate-400 uppercase font-semibold">Category / Module</label>
@@ -184,19 +256,16 @@
           </div>
         </div>
 
-        <!-- FB LINK -->
         <div>
           <label class="block text-xs text-slate-400 uppercase font-semibold">FB Link</label>
           <input type="text" id="cFbLink" placeholder="https://facebook.com/profile" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-ice-400" />
         </div>
 
-        <!-- I.C.E CHECKBOX -->
         <div class="flex items-center gap-2 pt-2">
           <input type="checkbox" id="cIsIce" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-rose-500 focus:ring-0 cursor-pointer" />
           <label for="cIsIce" class="text-xs text-rose-400 font-semibold cursor-pointer">Mark as Main I.C.E Emergency Contact</label>
         </div>
 
-        <!-- FORM BUTTONS -->
         <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
           <button type="button" onclick="toggleModal('contactModal')" class="px-4 py-2 text-xs text-slate-400 hover:text-slate-200">Cancel</button>
           <button type="submit" class="px-5 py-2 text-xs font-semibold bg-ice-500 hover:bg-ice-400 text-slate-950 rounded-lg">Save Contact</button>
@@ -205,7 +274,7 @@
     </div>
   </div>
 
-  <!-- Modal: Dispatch SMS Alert -->
+  <!-- Modal: Single Dispatch SMS Alert -->
   <div id="smsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="glass-panel w-full max-w-md rounded-2xl p-6 relative">
       <h3 class="text-lg font-bold text-slate-100 mb-1">📲 Send Emergency SMS Alert</h3>
@@ -350,6 +419,76 @@
           </div>
         </div>
       `).join('');
+    }
+
+    /* Checkbox Handler Functions for Group Text Blast */
+    function toggleSelectAllCategories(selectAllBox) {
+      const boxes = document.querySelectorAll('.group-cat-checkbox');
+      boxes.forEach(cb => cb.checked = selectAllBox.checked);
+    }
+
+    function syncSelectAllState() {
+      const selectAllBox = document.getElementById('catAllCheckbox');
+      const boxes = document.querySelectorAll('.group-cat-checkbox');
+      const checkedBoxes = document.querySelectorAll('.group-cat-checkbox:checked');
+      
+      selectAllBox.checked = (boxes.length === checkedBoxes.length);
+    }
+
+    async function sendGroupTextBlast(e) {
+      e.preventDefault();
+      
+      const selectAllBox = document.getElementById('catAllCheckbox');
+      const message = document.getElementById('groupBlastMessage').value.trim();
+      const sendBtn = document.getElementById('sendBlastBtn');
+
+      let categories = [];
+      if (selectAllBox.checked) {
+        categories = ['ALL'];
+      } else {
+        const checkedBoxes = document.querySelectorAll('.group-cat-checkbox:checked');
+        categories = Array.from(checkedBoxes).map(cb => cb.value);
+      }
+
+      if (categories.length === 0) {
+        return alert('Please select at least one recipient group or check "Select All Contacts".');
+      }
+
+      if (!message) {
+        return alert('Please type a broadcast message.');
+      }
+
+      const confirmText = categories.includes('ALL') 
+        ? 'Are you sure you want to send this broadcast to ALL contacts in the directory?' 
+        : `Are you sure you want to send this broadcast to the selected group(s): ${categories.join(', ')}?`;
+
+      if (!confirm(confirmText)) return;
+
+      sendBtn.disabled = true;
+      sendBtn.innerText = '⏳ Dispatching SMS...';
+
+      try {
+        const res = await fetch('/api/text-blast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ categories, message })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          alert(`🚀 Success! Text blast dispatched to ${data.count} recipient(s).`);
+          document.getElementById('groupBlastMessage').value = '';
+          toggleModal('groupSmsModal');
+        } else {
+          alert('Error sending text blast: ' + (data.error || 'Unknown error occurred.'));
+        }
+      } catch (err) {
+        alert('Gateway error sending text blast: ' + err.message);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerText = '🚀 Dispatch Group Text Blast';
+      }
     }
 
     function openContactModal() {
