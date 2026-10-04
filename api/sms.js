@@ -3,8 +3,8 @@ const router = express.Router();
 const axios = require('axios');
 
 // Clean API Key & Device ID (removes accidental spaces or quote wrapping)
-const rawApiKey = process.env.TEXTBEE_API_KEY || 'txb_1lOLLOeiwfVpTVmfd6F6E9qF0pnHtTp7';
-const rawDeviceId = process.env.TEXTBEE_DEVICE_ID || '6ac0dcd5cf8e7692e00bafa3';
+const rawApiKey = process.env.TEXTBEE_API_KEY || 'txb_9hoUuIyHpOoRQ2hBr3MhBM3hdrXJx2cE';
+const rawDeviceId = process.env.TEXTBEE_DEVICE_ID || '6ac193beb5c1ad28b676bc44';
 
 const TEXTBEE_API_KEY = rawApiKey.trim();
 const TEXTBEE_DEVICE_ID = rawDeviceId.trim();
