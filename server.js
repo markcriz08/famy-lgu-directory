@@ -64,7 +64,10 @@ app.post('/api/text-blast', async (req, res) => {
           'x-api-key': process.env.TEXTBEE_API_KEY,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ recipients, message })
+        body: JSON.stringify({
+          recipients, 
+          message: '[FAMY MDRRMO ALERT] ${message}' 
+        })
       }
     );
 
